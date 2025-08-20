@@ -57,5 +57,3 @@ body:
       options:
         - label: Yes
           required: false
-        - label: No
-          required: false
