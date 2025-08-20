@@ -1,0 +1,63 @@
+name: New User Creation Form
+description: Form for creating a new user in Azure Active Directory
+title: "[Create a New User]: "
+labels: ["user"]
+assignees:
+  - tejaveeraneni
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please fill out this form to create a new user in Azure AD.
+  - type: input
+    id: firstName
+    attributes:
+      label: First Name
+      description: Enter the first name of the user.
+    validations:
+      required: true
+
+  - type: input
+    id: lastName
+    attributes:
+      label: Last Name
+      description: Enter the last name of the user.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: location
+    attributes:
+      label: Location
+      description: Select where the user will be located
+      options:
+        - United States
+        - India
+    validations:
+      required: true
+
+  - type: input
+    id: jobTitle
+    attributes:
+      label: Job Title
+      description: Enter the job title of the user.
+    validations:
+      required: false
+
+  - type: input
+    id: phoneNumber
+    attributes:
+      label: Phone Number
+      description: Enter the phone number of the user.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: VPNAccess
+    attributes:
+      label: VPN Access Requirements
+      description: Check if the user needs VPN access.
+      options:
+        - label: Yes
+          required: false
