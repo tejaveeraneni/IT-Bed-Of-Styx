@@ -1,15 +1,12 @@
 name: New User Creation Form
 description: Form for creating a new user in Azure Active Directory
-# title: "[Create a New User]: "
+title: "[Create a New User]: "
 labels: ["user"]
 assignees:
   - tejaveeraneni
 
 body:
-  - type: markdown
-    attributes:
-      value: |
-        Please fill out this form to create a new user in Azure AD.
+
   - type: input
     id: firstName
     attributes:
@@ -30,7 +27,7 @@ body:
     id: location
     attributes:
       label: Location
-      description: Select where the user will be located
+      description: Select where the user will be located.
       options:
         - United States
         - India
