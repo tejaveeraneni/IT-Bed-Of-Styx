@@ -1,6 +1,6 @@
 name: New User Creation Form
 description: Form for creating a new user in Azure Active Directory
-title: "[Create a New User]: "
+# title: "[Create a New User]: "
 labels: ["user"]
 assignees:
   - tejaveeraneni
@@ -51,7 +51,7 @@ body:
       label: Phone Number
       description: Enter the phone number of the user.
     validations:
-      required: true
+      required: false
 
   - type: checkboxes
     id: VPNAccess
