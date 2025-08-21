@@ -4,12 +4,21 @@ on: # Trigger the workflow when an issue is opened
   issues:
     types: [opened]
 
-jobs: # Make a create-user job that runs on the latest version of windows if the issue contains a "user" label
+jobs: # Make a create-user job that runs on the latest version of windows
   create-user:
     runs-on: windows-latest
-    if: contains(github.event.issue.labels.*.name, 'user')
+    # Trigger if issue has "user" label OR if the issue title contains "Create a New User"
+    if: contains(github.event.issue.title, 'Create a New User')
 
     steps: # The first step is to download all the repository code and use the checkout action for that download
+       - name: Debug Issue Information
+         uses: actions/github-script@v7
+         with:
+           script: |
+             console.log("Issue title:", context.payload.issue.title);
+             console.log("Issue labels:", context.payload.issue.labels.map(l => l.name));
+             console.log("Issue body length:", context.payload.issue.body ? context.payload.issue.body.length : 0);
+
        - name: Checkout repository
          uses: actions/checkout@v4
 
