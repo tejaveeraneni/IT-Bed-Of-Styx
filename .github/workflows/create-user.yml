@@ -114,7 +114,7 @@ jobs: # Make a create-user job that runs on the latest version of windows
            Write-Host "Connected to Microsoft Graph"
            Get-MgContext
 
-           Connect-MgGraph -ClientId $ClientId -TenantId $TenantId -Credential $Credential
+           Connect-MgGraph -ClientSecretCredential $Credential -TenantId $TenantId
 
            # Run the onboarding script
            .\docs\IT\scripts\onboardingNewUser.ps1
