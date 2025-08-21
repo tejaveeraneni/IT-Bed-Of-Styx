@@ -1,0 +1,175 @@
+name: Create New User from Issue Form # Name for defining the workflow
+
+on: # Trigger the workflow when an issue is opened
+  issues:
+    types: [opened]
+
+jobs: # Make a create-user job that runs on the latest version of windows if the issue contains a "user" label
+  create-user:
+    runs-on: windows-latest
+    if: contains(github.event.issue.labels.*.name, 'user')
+
+    steps: # The first step is to download all the repository code and use the checkout action for that download
+       - name: Checkout repository
+         uses: actions/checkout@v4
+
+       - name: Parse Issue Form Data # The second step is to parse the data from the form using github-script to run Javascript directly with the Github API
+         id: parse
+         uses: actions/github-script@v7
+         with:
+          script: |
+            const issueBody = context.payload.issue.body; // Get the body and text of the issue generated when it's created
+            console.log("Issue body:", issueBody);
+
+            const parseFormField = (body, fieldName) => { // Look for ### FieldName followed by content until the next ###, double newline, or end of string
+              const regex = new RegExp(`### ${fieldName}\\s*\\n\\s*(.+?)\\s*(?=\\n###|\\n\\n|$)`, 'i');
+              const match = body.match(regex);
+              return match ? match[1].trim() : '';
+            };
+
+            const parseDropDown = (body, fieldName) => { // Look for ### FieldName followed by content until the next ###, double newline, or end of string
+              const regex = new RegExp(`### ${fieldName}\\s*\\n\\s*(.+?)\\s*(?=\\n###|\\n\\n|$)`, 'i');
+              const match = body.match(regex);
+              return match ? match[1].trim() : '';
+            };
+
+            const parseCheckboxes = (body, fieldName) => { // Looks for ### FieldName followed by a checked checkbox - [x] and captures that option
+              const regex = new RegExp(`### ${fieldName}[\\s\\S]*?\\n- \\[x\\] (.+?)\\s*(?=\\n###|\\n\\n|\\n- \\[|$)`, 'i');
+              const match = body.match(regex);
+              return match ? match[1].trim() : 'No';
+            };
+
+            const firstName = parseFormField(issueBody, 'First Name'); // Parse the form fields from the issue body
+            const lastName = parseFormField(issueBody, 'Last Name');
+            const location = parseDropDown(issueBody, 'Location');
+            const jobTitle = parseFormField(issueBody, 'Job Title');
+            const phoneNumber = parseFormField(issueBody, 'Phone Number');
+            const VPNAccess = parseCheckboxes(issueBody, 'VPN Access Requirements');
+
+            console.log("Parsed data: ", {
+              firstName, lastName, location, jobTitle, phoneNumber, VPNAccess
+            });
+
+            core.setOutput('firstName', firstName); // setOutput is used to pass the data into key-value pairs that can be accessed in later steps
+            core.setOutput('lastName', lastName);
+            core.setOutput('location', location);
+            core.setOutput('jobTitle', jobTitle);
+            core.setOutput('phoneNumber', phoneNumber);
+            core.setOutput('VPNAccess', VPNAccess);
+
+            // Validate required fields
+
+
+            const missingFields = [];
+            if (!firstName) missingFields.push('First Name');
+            if (!lastName) missingFields.push('Last Name');
+            if (!location) missingFields.push('Location');
+
+            if (missingFields.length > 0) {
+              core.setFailed(`Missing required fields: ${missingFields.join(', ')}`);
+            }
+
+       - name: Create a CSV File with the User Details
+         run: |
+            $csvContent = @"
+            FirstName, LastName, JobTitle, PhoneNumber, Location, VPNAccess
+            ${{steps.parse.outputs.firstName}}, ${{steps.parse.outputs.lastName}}, ${{steps.parse.outputs.jobTitle}}, ${{steps.parse.outputs.phoneNumber}}, ${{steps.parse.outputs.location}}, ${{steps.parse.outputs.VPNAccess}}
+            "@
+
+            $csvContent | Out-File -FilePath "docs/IT/scripts/NewAccounts.csv" -Encoding utf8
+            Write-Host "Created CSV file with user data"
+            Get-Content "docs/IT/scripts/NewAccounts.csv"
+         shell: pwsh
+
+       - name: Install Microsoft Graph PowerShell Module
+        # This step installs the Microsoft Graph PowerShell module to interact with Azure AD
+         run: |
+          Install-Module Microsoft.Graph -Force -AllowClobber -Scope CurrentUser
+          Write-Host "Microsoft Graph Powershell Module installed"
+         shell: pwsh
+
+       - name: Run onBoarding script and create User Account
+         run: |
+           # Get Azure credentials
+           $ClientId = "${{ secrets.AZURE_CLIENT_ID }}"
+           $ClientSecret = "${{ secrets.AZURE_CLIENT_SECRET }}"
+           $TenantId = "${{ secrets.AZURE_TENANT_ID }}"
+
+           # Check if we're in demo mode or have real credentials
+           $demoMode = (-not $ClientId -or -not $ClientSecret -or -not $TenantId)
+
+           # Extract user details from the parsed form data
+           $firstName = "${{ steps.parse.outputs.firstName }}"
+           $lastName = "${{ steps.parse.outputs.lastName }}"
+           $location = "${{ steps.parse.outputs.location }}"
+           $jobTitle = "${{ steps.parse.outputs.jobTitle }}"
+           $phoneNumber = "${{ steps.parse.outputs.phoneNumber }}"
+           $vpnAccess = "${{ steps.parse.outputs.VPNAccess }}"
+
+           # Generate username and email
+           $username = "$firstName.$lastName".ToLower()
+           $email = "$username@oxmiq.ai"
+
+           if ($demoMode) {
+             Write-Host "🧪 RUNNING IN DEMO MODE" -ForegroundColor Yellow
+             Write-Host "=" * 50
+             Write-Host "📋 Processing user creation request..." -ForegroundColor Cyan
+
+             Write-Host ""
+             Write-Host "👤 USER DETAILS:" -ForegroundColor Green
+             Write-Host "   Full Name: $firstName $lastName"
+             Write-Host "   Username: $username"
+             Write-Host "   Email: $email"
+             Write-Host "   Job Title: $jobTitle"
+             Write-Host "   Phone: $phoneNumber"
+             Write-Host "   Location: $location"
+             Write-Host "   VPN Access: $vpnAccess"
+
+             Write-Host ""
+             Write-Host "📄 CSV FILE CONTENTS:" -ForegroundColor Green
+             Get-Content "docs/IT/scripts/NewAccounts.csv"
+
+             Write-Host ""
+             Write-Host "🔧 SIMULATED ACTIONS:" -ForegroundColor Green
+             Write-Host "   ✅ Would connect to Microsoft Graph"
+             Write-Host "   ✅ Would create user account: $email"
+             Write-Host "   ✅ Would set default password: Password123 (change required)"
+             Write-Host "   ✅ Would assign usage location: $location"
+             Write-Host "   ✅ Would enable account"
+
+             if ($vpnAccess -eq "Yes, this user needs VPN access") {
+               Write-Host "   ✅ Would configure VPN access"
+             }
+           }
+         shell: pwsh
+
+       - name: Update Issue with Status
+         uses: actions/github-script@v7
+         with:
+          script: |
+            const { firstName, lastName, location, vpnAccess, jobTitle, phoneNumber } = {
+              firstName: '${{ steps.parse.outputs.firstName }}',
+              lastName: '${{ steps.parse.outputs.lastName }}',
+              location: '${{ steps.parse.outputs.location }}',
+              vpnAccess: '${{ steps.parse.outputs.vpnAccess }}',
+              jobTitle: '${{ steps.parse.outputs.jobTitle }}',
+              phoneNumber: '${{ steps.parse.outputs.phoneNumber }}'
+            };
+
+            const comment = `## ${statusIcon} User Creation Process - ${mode} MODE
+
+            **User Details:**
+            - **Name:** ${firstName} ${lastName}
+            - **Username:** ${username}
+            - **Email:** ${email}
+            - **Job Title:** ${jobTitle}
+            - **Phone:** ${phoneNumber}
+            - **Location:** ${location}
+            - **VPN Access:** ${vpnAccess}
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
