@@ -78,8 +78,8 @@ jobs: # Make a create-user job that runs on the latest version of windows
          run: |
             $DisplayName = "${{steps.parse.outputs.firstName}} ${{steps.parse.outputs.lastName}}"
 
-            $FirstNameFirstWord = ($"${{steps.parse.outputs.firstName}}" -split '\s+')[0].ToLower()
-            $LastNameLastWord = ($"${{steps.parse.outputs.lastName}}" -split '\s+')[-1].ToLower()
+            $FirstNameFirstWord = (${{steps.parse.outputs.firstName}}" -split '\s+')[0].ToLower()
+            $LastNameLastWord = (${{steps.parse.outputs.lastName}}" -split '\s+')[-1].ToLower()
             $MailNickname = "$FirstNameFirstWord.$LastNameLastWord"
 
             $csvContent = @"
