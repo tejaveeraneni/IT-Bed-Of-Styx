@@ -88,9 +88,11 @@ jobs: # Make a create-user job that runs on the latest version of windows
             $LastNameLastWord = ("$LastName" -split '\s+')[-1].ToLower()
             $MailNickname = "$FirstNameFirstWord.$LastNameLastWord"
 
+            $UserPrincipalName = "$FirstNameFirstWord.$LastNameLastWord@oxmiq.ai"
+
             $csvContent = @"
-            FirstName,LastName,JobTitle,PhoneNumber,DisplayName,MailNickname,Location
-            $FirstName,$LastName,$JobTitle,$PhoneNumber,$DisplayName,$MailNickname,$Location
+            FirstName,LastName,JobTitle,PhoneNumber,DisplayName,MailNickname,Location,UserPrincipalName
+            $FirstName,$LastName,$JobTitle,$PhoneNumber,$DisplayName,$MailNickname,$Location,$UserPrincipalName
             "@
 
             $csvContent = $csvContent -replace "_No response_", ""

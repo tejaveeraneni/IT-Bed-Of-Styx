@@ -97,7 +97,7 @@ foreach ($user in $users) {
         -Surname $user.LastName `
         -DisplayName $user.DisplayName `
         -MailNickname $user.MailNickname `
-        -UserPrincipalName $user.MailNickname + "@oxmiq.ai" `
+        -UserPrincipalName $user.UserPrincipalName `
         -JobTitle $user.JobTitle `
         -PasswordProfile $PasswordProfile `
         -AccountEnabled `
