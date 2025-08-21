@@ -34,7 +34,7 @@
 .EXAMPLE
     PS> .\onboardingNewUser.ps1
 
-    Reads from NewAccounts.csv and creates users interactively.
+    Reads from NewAccounts.csv and creates users interactively
 
     Available Licenses:
     1. ENTERPRISEPACK - 25 available
@@ -122,7 +122,7 @@ foreach ($user in $users) {
     $selectedLicense = $licenses[$choice - 1]
 
     Set-MgUserLicense -UserId $newUser.Id `
-        -AddLicenses @{SkuId = $selectedLicense.SkuId} `
+        -AddLicenses @{SkuId = $selectedLicense.SkuId } `
         -RemoveLicenses @()
 }
 
