@@ -76,9 +76,15 @@ jobs: # Make a create-user job that runs on the latest version of windows
 
        - name: Create a CSV File with the User Details
          run: |
+            $DisplayName = "${{steps.parse.outputs.firstName}}.${{steps.parse.outputs.lastName}}"
+
+            $FirstNameFirstWord = ($"${{steps.parse.outputs.firstName}}" -split '\s+')[0].ToLower()
+            $LastNameLastWord = ($"${{steps.parse.outputs.lastName}}" -split '\s+')[-1].ToLower()
+            $MailNickname = "$FirstNameFirstWord.$LastNameLastWord"
+
             $csvContent = @"
-            FirstName, LastName, JobTitle, PhoneNumber, Location, VPNAccess
-            ${{steps.parse.outputs.firstName}}, ${{steps.parse.outputs.lastName}}, ${{steps.parse.outputs.jobTitle}}, ${{steps.parse.outputs.phoneNumber}}, ${{steps.parse.outputs.location}}, ${{steps.parse.outputs.VPNAccess}}
+            FirstName, LastName, JobTitle, PhoneNumber, DisplayName, MailNickname, Location
+            ${{steps.parse.outputs.firstName}}, ${{steps.parse.outputs.lastName}}, ${{steps.parse.outputs.jobTitle}}, ${{steps.parse.outputs.phoneNumber}}, $DisplayName, $MailNickname, ${{steps.parse.outputs.location}}
             "@
 
             $csvContent = $csvContent -replace "_No response_", ""
@@ -102,9 +108,6 @@ jobs: # Make a create-user job that runs on the latest version of windows
            $ClientSecret = "${{ secrets.AZURE_CLIENT_SECRET }}"
            $TenantId = "${{ secrets.AZURE_TENANT_ID }}"
 
-           # Check if we're in demo mode or have real credentials
-           $demoMode = (-not $ClientId -or -not $ClientSecret -or -not $TenantId)
-
            # Extract user details from the parsed form data
            $firstName = "${{ steps.parse.outputs.firstName }}"
            $lastName = "${{ steps.parse.outputs.lastName }}"
@@ -116,38 +119,6 @@ jobs: # Make a create-user job that runs on the latest version of windows
            # Generate username and email
            $username = "$firstName.$lastName".ToLower()
            $email = "$username@oxmiq.ai"
-
-           if ($demoMode) {
-             Write-Host "🧪 RUNNING IN DEMO MODE" -ForegroundColor Yellow
-             Write-Host "=" * 50
-             Write-Host "📋 Processing user creation request..." -ForegroundColor Cyan
-
-             Write-Host ""
-             Write-Host "👤 USER DETAILS:" -ForegroundColor Green
-             Write-Host "   Full Name: $firstName $lastName"
-             Write-Host "   Username: $username"
-             Write-Host "   Email: $email"
-             Write-Host "   Job Title: $jobTitle"
-             Write-Host "   Phone: $phoneNumber"
-             Write-Host "   Location: $location"
-             Write-Host "   VPN Access: $vpnAccess"
-
-             Write-Host ""
-             Write-Host "📄 CSV FILE CONTENTS:" -ForegroundColor Green
-             Get-Content "docs/IT/scripts/NewAccounts.csv"
-
-             Write-Host ""
-             Write-Host "🔧 SIMULATED ACTIONS:" -ForegroundColor Green
-             Write-Host "   ✅ Would connect to Microsoft Graph"
-             Write-Host "   ✅ Would create user account: $email"
-             Write-Host "   ✅ Would set default password: Password123 (change required)"
-             Write-Host "   ✅ Would assign usage location: $location"
-             Write-Host "   ✅ Would enable account"
-
-             if ($vpnAccess -eq "Yes, this user needs VPN access") {
-               Write-Host "   ✅ Would configure VPN access"
-             }
-           }
          shell: pwsh
 
        - name: Update Issue with Status

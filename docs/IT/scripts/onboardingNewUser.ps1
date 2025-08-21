@@ -92,38 +92,32 @@ $PasswordProfile = @{
 }
 
 foreach ($user in $users) {
-    $firstName = $user.FirstName
-    $lastName = $user.LastName
-    $displayName = "$firstName $lastName"
-    $firstWord = ($firstName -split '\s+')[0].ToLower()
-    $mailNickname = "$firstWord.$($lastName.ToLower())"
-
     $newUser = New-MgUser -ErrorAction Stop `
         -GivenName $user.FirstName `
         -Surname $user.LastName `
-        -DisplayName $displayName `
-        -MailNickname $mailNickname `
-        -UserPrincipalName "$mailNickname@oxmiq.ai" `
+        -DisplayName $user.DisplayName `
+        -MailNickname $user.MailNickname `
+        -UserPrincipalName $user.MailNickname + "@oxmiq.ai" `
         -JobTitle $user.JobTitle `
         -PasswordProfile $PasswordProfile `
         -AccountEnabled `
         -MobilePhone $user.PhoneNumber `
-        -UsageLocation "US"
+        -UsageLocation $user.Location
 
-    $licenses = Get-MgSubscribedSku -All
+    # $licenses = Get-MgSubscribedSku -All
 
-    Write-Host "Available Licenses:"
-    for ($i = 0; $i -lt $licenses.Count; $i++) {
-        $available = $licenses[$i].PrepaidUnits.Enabled - $licenses[$i].ConsumedUnits
-        Write-Host "$($i + 1). $($licenses[$i].SkuPartNumber) - $available available"
-    }
+    # Write-Host "Available Licenses:"
+    # for ($i = 0; $i -lt $licenses.Count; $i++) {
+    #     $available = $licenses[$i].PrepaidUnits.Enabled - $licenses[$i].ConsumedUnits
+    #     Write-Host "$($i + 1). $($licenses[$i].SkuPartNumber) - $available available"
+    # }
 
-    $choice = Read-Host "Which license? (Enter Number)"
-    $selectedLicense = $licenses[$choice - 1]
+    # $choice = Read-Host "Which license? (Enter Number)"
+    # $selectedLicense = $licenses[$choice - 1]
 
-    Set-MgUserLicense -UserId $newUser.Id `
-        -AddLicenses @{SkuId = $selectedLicense.SkuId } `
-        -RemoveLicenses @()
+    # Set-MgUserLicense -UserId $newUser.Id `
+    #     -AddLicenses @{SkuId = $selectedLicense.SkuId } `
+    #     -RemoveLicenses @()
 }
 
 Write-Host $users
