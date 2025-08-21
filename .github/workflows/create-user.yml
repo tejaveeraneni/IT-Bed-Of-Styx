@@ -105,7 +105,8 @@ jobs: # Make a create-user job that runs on the latest version of windows
        - name: Install Microsoft Graph PowerShell Module
          # This step installs the Microsoft Graph PowerShell module to interact with Azure AD
          run: |
-           Install-Module Microsoft.Graph -Force -AllowClobber -Scope CurrentUser
+           Install-Module Microsoft.Graph.Authentication -Force -Scope CurrentUser
+           Install-Module Microsoft.Graph.Users -Force -Scope CurrentUser
            Write-Host "Microsoft Graph Powershell Module installed"
          shell: pwsh
 
