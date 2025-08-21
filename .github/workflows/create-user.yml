@@ -76,15 +76,21 @@ jobs: # Make a create-user job that runs on the latest version of windows
 
        - name: Create a CSV File with the User Details
          run: |
-            $DisplayName = "${{steps.parse.outputs.firstName}} ${{steps.parse.outputs.lastName}}"
+            $FirstName = "${{steps.parse.outputs.firstName}}"
+            $LastName = "${{steps.parse.outputs.lastName}}"
+            $JobTitle = "${{steps.parse.outputs.jobTitle}}"
+            $PhoneNumber = "${{steps.parse.outputs.phoneNumber}}"
+            $Location = "${{steps.parse.outputs.location}}"
 
-            $FirstNameFirstWord = (${{steps.parse.outputs.firstName}}" -split '\s+')[0].ToLower()
-            $LastNameLastWord = (${{steps.parse.outputs.lastName}}" -split '\s+')[-1].ToLower()
+            $DisplayName = "$FirstName $LastName"
+
+            $FirstNameFirstWord = ("$FirstName" -split '\s+')[0].ToLower()
+            $LastNameLastWord = ("$LastName" -split '\s+')[-1].ToLower()
             $MailNickname = "$FirstNameFirstWord.$LastNameLastWord"
 
             $csvContent = @"
             FirstName,LastName,JobTitle,PhoneNumber,DisplayName,MailNickname,Location
-            ${{steps.parse.outputs.firstName}},${{steps.parse.outputs.lastName}},${{steps.parse.outputs.jobTitle}},${{steps.parse.outputs.phoneNumber}},$DisplayName,$MailNickname,${{steps.parse.outputs.location}}
+            $FirstName,$LastName,$JobTitle,$PhoneNumber,$DisplayName,$MailNickname,$Location
             "@
 
             $csvContent = $csvContent -replace "_No response_", ""
