@@ -81,7 +81,7 @@
 
 #>
 
-# This script reads user details from a CSV file named "NewAccounts.csv"
+# This script reads user details from a CSV file at "docs/IT/scripts/NewAccounts.csv"
 $users = Import-Csv "docs/IT/scripts/NewAccounts.csv"
 
 # Default password profile for new users
