@@ -95,7 +95,7 @@ jobs: # Make a create-user job that runs on the latest version of windows
             $FirstName,$LastName,$JobTitle,$PhoneNumber,$DisplayName,$MailNickname,$Location,$UserPrincipalName
             "@
 
-            $csvContent = $csvContent -replace "_No response_", ""
+            $csvContent = $csvContent -replace "_No response_", " "
 
             $csvContent | Out-File -FilePath "docs/IT/scripts/NewAccounts.csv" -Encoding utf8
             Write-Host "Created CSV file with user data"
