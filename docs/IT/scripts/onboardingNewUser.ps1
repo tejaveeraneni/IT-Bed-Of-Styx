@@ -82,7 +82,7 @@
 #>
 
 # This script reads user details from a CSV file named "NewAccounts.csv"
-$users = Import-Csv "NewAccounts.csv"
+$users = Import-Csv "docs/IT/scripts/NewAccounts.csv"
 
 # Default password profile for new users
 # Password is set to 'Password123' and requires a change on first sign-in
