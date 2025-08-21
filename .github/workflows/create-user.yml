@@ -80,7 +80,7 @@ jobs: # Make a create-user job that runs on the latest version of windows
             $LastName = "${{steps.parse.outputs.lastName}}"
             $JobTitle = "${{steps.parse.outputs.jobTitle}}"
             $PhoneNumber = "${{steps.parse.outputs.phoneNumber}}"
-            $Location = "${{steps.parse.outputs.location}}"
+            $UsageLocation = "${{steps.parse.outputs.location}}"
 
             $DisplayName = "$FirstName $LastName"
 
@@ -91,8 +91,8 @@ jobs: # Make a create-user job that runs on the latest version of windows
             $UserPrincipalName = "$FirstNameFirstWord.$LastNameLastWord@oxmiq.ai"
 
             $csvContent = @"
-            FirstName,LastName,JobTitle,PhoneNumber,DisplayName,MailNickname,Location,UserPrincipalName
-            $FirstName,$LastName,$JobTitle,$PhoneNumber,$DisplayName,$MailNickname,$Location,$UserPrincipalName
+            FirstName,LastName,JobTitle,PhoneNumber,DisplayName,MailNickname,UsageLocation,UserPrincipalName
+            $FirstName,$LastName,$JobTitle,$PhoneNumber,$DisplayName,$MailNickname,$UsageLocation,$UserPrincipalName
             "@
 
             $csvContent = $csvContent -replace "_No response_", " "

@@ -102,7 +102,7 @@ foreach ($user in $users) {
         -PasswordProfile $PasswordProfile `
         -AccountEnabled `
         -MobilePhone $user.PhoneNumber `
-        -UsageLocation $user.Location
+        -UsageLocation $user.UsageLocation
 
     # $licenses = Get-MgSubscribedSku -All
 
