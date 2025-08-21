@@ -4,6 +4,11 @@ on: # Trigger the workflow when an issue is opened
   issues:
     types: [opened]
 
+permissions:
+  issues:
+    issues: write
+    contents: read
+
 jobs: # Make a create-user job that runs on the latest version of windows
   create-user:
     runs-on: windows-latest
