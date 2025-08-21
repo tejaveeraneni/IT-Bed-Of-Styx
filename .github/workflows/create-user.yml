@@ -85,6 +85,8 @@ jobs: # Make a create-user job that runs on the latest version of windows
             ${{steps.parse.outputs.firstName}}, ${{steps.parse.outputs.lastName}}, ${{steps.parse.outputs.jobTitle}}, ${{steps.parse.outputs.phoneNumber}}, ${{steps.parse.outputs.location}}, ${{steps.parse.outputs.VPNAccess}}
             "@
 
+            $csvContent = $csvContent -replace "_No response_", ""
+
             $csvContent | Out-File -FilePath "docs/IT/scripts/NewAccounts.csv" -Encoding utf8
             Write-Host "Created CSV file with user data"
             Get-Content "docs/IT/scripts/NewAccounts.csv"
@@ -156,25 +158,7 @@ jobs: # Make a create-user job that runs on the latest version of windows
          uses: actions/github-script@v7
          with:
           script: |
-            const { firstName, lastName, location, vpnAccess, jobTitle, phoneNumber } = {
-              firstName: '${{ steps.parse.outputs.firstName }}',
-              lastName: '${{ steps.parse.outputs.lastName }}',
-              location: '${{ steps.parse.outputs.location }}',
-              vpnAccess: '${{ steps.parse.outputs.vpnAccess }}',
-              jobTitle: '${{ steps.parse.outputs.jobTitle }}',
-              phoneNumber: '${{ steps.parse.outputs.phoneNumber }}'
-            };
 
-            const comment = `## ${statusIcon} User Creation Process - ${mode} MODE
-
-            **User Details:**
-            - **Name:** ${firstName} ${lastName}
-            - **Username:** ${username}
-            - **Email:** ${email}
-            - **Job Title:** ${jobTitle}
-            - **Phone:** ${phoneNumber}
-            - **Location:** ${location}
-            - **VPN Access:** ${vpnAccess}
 
             await github.rest.issues.createComment({
               issue_number: context.issue.number,
