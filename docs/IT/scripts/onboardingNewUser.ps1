@@ -92,17 +92,30 @@ $PasswordProfile = @{
 }
 
 foreach ($user in $users) {
-    $newUser = New-MgUser -ErrorAction Stop `
-        -GivenName $user.FirstName `
-        -Surname $user.LastName `
-        -DisplayName $user.DisplayName `
-        -MailNickname $user.MailNickname `
-        -UserPrincipalName $user.UserPrincipalName `
-        -JobTitle $user.JobTitle `
-        -PasswordProfile $PasswordProfile `
-        -AccountEnabled `
-        -MobilePhone $user.PhoneNumber `
-        -UsageLocation $user.UsageLocation
+
+    $userParams = @{
+        # Mandatory parameters
+        GivenName         = $user.FirstName
+        Surname           = $user.LastName
+        DisplayName       = $user.DisplayName
+        MailNickname      = $user.MailNickname
+        UserPrincipalName = $user.UserPrincipalName
+        AccountEnabled    = $true
+        ErrorAction       = 'Stop'
+        UsageLocation     = $user.UsageLocation
+        PasswordProfile   = $PasswordProfile
+
+        # Optional parameters
+        JobTitle          = $user.JobTitle
+        MobilePhone       = $user.PhoneNumber
+    }
+
+    @('JobTitle', 'MobilePhone') | ForEach-Object {
+        if (!$userParams[$_] -or $userParams[$_] -eq "_No response_" -or $userParams[$_].ToString().Trim() -eq "") {
+            $userParams.Remove($_)
+        }
+    }
+    $newUser = New-MgUser @userParams
 
     # $licenses = Get-MgSubscribedSku -All
 

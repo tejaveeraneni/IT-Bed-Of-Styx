@@ -95,7 +95,7 @@ jobs: # Make a create-user job that runs on the latest version of windows
             $FirstName,$LastName,$JobTitle,$PhoneNumber,$DisplayName,$MailNickname,$UsageLocation,$UserPrincipalName
             "@
 
-            $csvContent = $csvContent -replace "_No response_", " "
+            $csvContent = $csvContent -replace "_No response_", $null
 
             $csvContent | Out-File -FilePath "docs/IT/scripts/NewAccounts.csv" -Encoding utf8
             Write-Host "Created CSV file with user data"
@@ -123,7 +123,7 @@ jobs: # Make a create-user job that runs on the latest version of windows
            Write-Host "Connected to Microsoft Graph"
            Get-MgContext
 
-           Connect-MgGraph -ClientSecretCredential $Credential -TenantId $TenantId
+           Connect-MgGraph -ClientSecretCredential $Credential -TenantId $TenantId -NoWelcome
 
            # Run the onboarding script
            .\docs\IT\scripts\onboardingNewUser.ps1
