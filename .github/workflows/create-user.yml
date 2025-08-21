@@ -76,7 +76,7 @@ jobs: # Make a create-user job that runs on the latest version of windows
 
        - name: Create a CSV File with the User Details
          run: |
-            $DisplayName = "${{steps.parse.outputs.firstName}}.${{steps.parse.outputs.lastName}}"
+            $DisplayName = "${{steps.parse.outputs.firstName}} ${{steps.parse.outputs.lastName}}"
 
             $FirstNameFirstWord = ($"${{steps.parse.outputs.firstName}}" -split '\s+')[0].ToLower()
             $LastNameLastWord = ($"${{steps.parse.outputs.lastName}}" -split '\s+')[-1].ToLower()
@@ -84,7 +84,7 @@ jobs: # Make a create-user job that runs on the latest version of windows
 
             $csvContent = @"
             FirstName,LastName,JobTitle,PhoneNumber,DisplayName,MailNickname,Location
-            ${{steps.parse.outputs.firstName}}, ${{steps.parse.outputs.lastName}}, ${{steps.parse.outputs.jobTitle}}, ${{steps.parse.outputs.phoneNumber}}, $DisplayName, $MailNickname, ${{steps.parse.outputs.location}}
+            ${{steps.parse.outputs.firstName}},${{steps.parse.outputs.lastName}},${{steps.parse.outputs.jobTitle}},${{steps.parse.outputs.phoneNumber}},$DisplayName,$MailNickname,${{steps.parse.outputs.location}}
             "@
 
             $csvContent = $csvContent -replace "_No response_", ""
@@ -113,6 +113,8 @@ jobs: # Make a create-user job that runs on the latest version of windows
 
            Write-Host "Connected to Microsoft Graph"
            Get-MgContext
+
+           Connect-MgGraph -ClientId $ClientId -TenantId $TenantId -Credential $Credential
 
            # Run the onboarding script
            .\docs\IT\scripts\onboardingNewUser.ps1
