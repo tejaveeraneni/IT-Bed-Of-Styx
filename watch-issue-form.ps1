@@ -1,11 +1,11 @@
 # File Watcher for GitHub Issue Form
-# This script watches your issue form file and validates it automatically when saved
+# This script watches your issue form file and automatically commits/pushes changes
 
 $issueFormPath = ".github/ISSUE_TEMPLATE/user-creation-form.yml"
 $fullPath = (Resolve-Path $issueFormPath).Path
 
 Write-Host "👀 Watching for changes to: $issueFormPath" -ForegroundColor Cyan
-Write-Host "💡 Save the file to see automatic validation" -ForegroundColor Yellow
+Write-Host "� Will auto-commit and push changes when saved" -ForegroundColor Yellow
 Write-Host "🛑 Press Ctrl+C to stop watching" -ForegroundColor Red
 Write-Host ("=" * 60)
 
@@ -24,14 +24,17 @@ $action = {
     Write-Host "`n[$timeStamp] File ${changeType}: $path" -ForegroundColor Green
 
     # Small delay to ensure file write is complete
-    Start-Sleep -Milliseconds 500
+    Start-Sleep -Milliseconds 1000
 
-    # Run validation
+    # Auto-commit and push changes
     try {
-        & ".\validate-issue-form.ps1" | Out-Host
+        Write-Host "🔄 Auto-committing changes..." -ForegroundColor Cyan
+        $commitMessage = "Update issue form - $timeStamp"
+        & ".\auto-commit.ps1" -CommitMessage $commitMessage
+        Write-Host "✅ Changes committed and pushed!" -ForegroundColor Green
     }
     catch {
-        Write-Host "❌ Error running validation: $_" -ForegroundColor Red
+        Write-Host "❌ Error auto-committing: $_" -ForegroundColor Red
     }
 
     Write-Host ("-" * 60)
