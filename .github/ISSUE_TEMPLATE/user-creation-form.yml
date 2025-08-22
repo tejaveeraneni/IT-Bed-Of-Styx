@@ -49,11 +49,11 @@ body:
     validations:
       required: false
 
-  - type: checkboxes
-    id: VPNAccess
-    attributes:
-      label: VPN Access Requirements
-      description: Check if the user needs VPN access.
-      options:
-        - label: Yes, this user needs VPN access
-          required: false
+  # - type: checkboxes
+  #   id: VPNAccess
+  #   attributes:
+  #     label: VPN Access Requirements
+  #     description: Check if the user needs VPN access.
+  #     options:
+  #       - label: Yes, this user needs VPN access
+  #         required: false

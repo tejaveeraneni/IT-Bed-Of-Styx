@@ -121,7 +121,6 @@ jobs: # Make a create-user job that runs on the latest version of windows
            $Credential = New-Object System.Management.Automation.PSCredential($ClientId, $ClientSecret)
 
            Write-Host "Connected to Microsoft Graph"
-           Get-MgContext
 
            Connect-MgGraph -ClientSecretCredential $Credential -TenantId $TenantId -NoWelcome
 
