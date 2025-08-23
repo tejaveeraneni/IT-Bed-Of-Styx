@@ -32,8 +32,8 @@ body:
       label: Location
       description: Select where the user will be located
       options:
-        - United States
-        - India
+        - US
+        - IN
     validations:
       required: true
 
