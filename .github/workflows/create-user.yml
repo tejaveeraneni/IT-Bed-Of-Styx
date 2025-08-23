@@ -88,20 +88,20 @@ jobs: # Make a create-user job that runs on the latest version of windows
                repo: context.repo.repo, // Added missing comma
                body: `## User Creation Request Summary
 
-            An Account will be generated with the following details:
-            - **First Name**: ${firstName}
-            - **Last Name**: ${lastName}
-            - **Location**: ${location}
-            - **Job Title**: ${jobTitle}
-            - **Phone Number**: ${phoneNumber}
-            - **Display Name**: ${displayName}
-            - **Email**: ${email}
-            - **Default Password:**: "Password123"(change at first login)
-            - **Account Enabled**: Yes
+              An Account will be generated with the following details:
+              - **First Name**: ${firstName}
+              - **Last Name**: ${lastName}
+              - **Location**: ${location}
+              - **Job Title**: ${jobTitle}
+              - **Phone Number**: ${phoneNumber}
+              - **Display Name**: ${displayName}
+              - **Email**: ${email}
+              - **Default Password:**: "Password123"(change at first login)
+              - **Account Enabled**: Yes
 
-            **Waiting on Admin Approval to create user**
-            `
-          })
+              **Waiting on Admin Approval to create user**
+              `
+              })
 
 
        - name: Create a CSV File with the User Details
