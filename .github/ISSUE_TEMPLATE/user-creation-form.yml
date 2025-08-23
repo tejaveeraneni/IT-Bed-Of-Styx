@@ -6,6 +6,10 @@ assignees:
   - tejaveeraneni
 
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Please fill out this form to create a new user in Azure AD.
   - type: input
     id: firstName
     attributes:
@@ -26,10 +30,10 @@ body:
     id: location
     attributes:
       label: Location
-      description: Select where the user will be located.
+      description: Select where the user will be located
       options:
-        - US
-        - IN
+        - United States
+        - India
     validations:
       required: true
 
@@ -47,13 +51,4 @@ body:
       label: Phone Number
       description: Enter the phone number of the user.
     validations:
-      required: false
-
-  # - type: checkboxes
-  #   id: VPNAccess
-  #   attributes:
-  #     label: VPN Access Requirements
-  #     description: Check if the user needs VPN access.
-  #     options:
-  #       - label: Yes, this user needs VPN access
-  #         required: false
+      required: true

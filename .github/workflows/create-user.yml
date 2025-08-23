@@ -2,7 +2,7 @@ name: Create New User from Issue Form # Name for defining the workflow
 
 on: # Trigger the workflow when an issue is opened
   issues:
-    types: [opened]
+    types: [opened, labeled]
 
 permissions:
   issues: write
@@ -49,22 +49,14 @@ jobs: # Make a create-user job that runs on the latest version of windows
             const location = parseDropDown(issueBody, 'Location');
             const jobTitle = parseFormField(issueBody, 'Job Title');
             const phoneNumber = parseFormField(issueBody, 'Phone Number');
-            const VPNAccess = parseCheckboxes(issueBody, 'VPN Access Requirements');
-
-            console.log("Parsed data: ", {
-              firstName, lastName, location, jobTitle, phoneNumber, VPNAccess
-            });
 
             core.setOutput('firstName', firstName); // setOutput is used to pass the data into key-value pairs that can be accessed in later steps
             core.setOutput('lastName', lastName);
             core.setOutput('location', location);
             core.setOutput('jobTitle', jobTitle);
             core.setOutput('phoneNumber', phoneNumber);
-            core.setOutput('VPNAccess', VPNAccess);
 
             // Validate required fields
-
-
             const missingFields = [];
             if (!firstName) missingFields.push('First Name');
             if (!lastName) missingFields.push('Last Name');
@@ -74,7 +66,46 @@ jobs: # Make a create-user job that runs on the latest version of windows
               core.setFailed(`Missing required fields: ${missingFields.join(', ')}`);
             }
 
+       - name: Display User Information for Review
+         uses: actions/github-script@v7
+         with:
+           script: | # Fixed indentation
+             const { firstName, lastName, location, jobTitle, phoneNumber } = {
+               firstName: '${{ steps.parse.outputs.firstName }}',
+               lastName: '${{ steps.parse.outputs.lastName }}',
+               location: '${{ steps.parse.outputs.location }}',
+               jobTitle: '${{ steps.parse.outputs.jobTitle }}',
+               phoneNumber: '${{ steps.parse.outputs.phoneNumber }}',
+             };
+
+             const displayName = `${firstName} ${lastName}`;
+             const mailNickname = `${firstName.split(' ')[0].toLowerCase()}.${lastName.split(' ').pop().toLowerCase()}`;
+             const email = `${mailNickname}@oxmiq.ai`;
+
+             await github.rest.issues.createComment({ // Fixed typo: isssues -> issues
+               issue_number: context.issue.number,
+               owner: context.repo.owner,
+               repo: context.repo.repo, // Added missing comma
+               body: `## User Creation Request Summary
+
+            An Account will be generated with the following details:
+            - **First Name**: ${firstName}
+            - **Last Name**: ${lastName}
+            - **Location**: ${location}
+            - **Job Title**: ${jobTitle}
+            - **Phone Number**: ${phoneNumber}
+            - **Display Name**: ${displayName}
+            - **Email**: ${email}
+            - **Default Password:**: "Password123"(change at first login)
+            - **Account Enabled**: Yes
+
+            **Waiting on Admin Approval to create user**
+            `
+          })
+
+
        - name: Create a CSV File with the User Details
+         environment: production
          run: |
             $FirstName = "${{steps.parse.outputs.firstName}}"
             $LastName = "${{steps.parse.outputs.lastName}}"
@@ -95,23 +126,27 @@ jobs: # Make a create-user job that runs on the latest version of windows
             $FirstName,$LastName,$JobTitle,$PhoneNumber,$DisplayName,$MailNickname,$UsageLocation,$UserPrincipalName
             "@
 
-            $csvContent = $csvContent -replace "_No response_", $null
+            $csvContent = $csvContent -replace "_No response_", ""
 
             $csvContent | Out-File -FilePath "docs/IT/scripts/NewAccounts.csv" -Encoding utf8
-            Write-Host "Created CSV file with user data"
+            Write-Host "✅ Created CSV file with user data"
+            Write-Host "📄 CSV Content:"
             Get-Content "docs/IT/scripts/NewAccounts.csv"
          shell: pwsh
 
        - name: Install Microsoft Graph PowerShell Module
          # This step installs the Microsoft Graph PowerShell module to interact with Azure AD
          run: |
+           Write-Host "📦 Installing Microsoft Graph PowerShell Module..." -ForegroundColor Cyan
            Install-Module Microsoft.Graph.Authentication -Force -Scope CurrentUser
            Install-Module Microsoft.Graph.Users -Force -Scope CurrentUser
-           Write-Host "Microsoft Graph Powershell Module installed"
+           Write-Host "✅ Microsoft Graph PowerShell Module installed" -ForegroundColor Green
          shell: pwsh
 
        - name: Run onBoarding script and create User Account
          run: |
+           Write-Host "🚀 Starting user account creation process..." -ForegroundColor Cyan
+
            # Get Azure credentials from secrets
            $ClientId = "${{ secrets.AZURE_CLIENT_ID }}"
            $ClientSecret = "${{ secrets.AZURE_CLIENT_SECRET }}" | ConvertTo-SecureString -AsPlainText -Force
@@ -132,18 +167,28 @@ jobs: # Make a create-user job that runs on the latest version of windows
          uses: actions/github-script@v7
          with:
            script: |
-             const { firstName, lastName, location, vpnAccess, jobTitle, phoneNumber } = {
+             const { firstName, lastName, location, jobTitle, phoneNumber } = {
                firstName: '${{ steps.parse.outputs.firstName }}',
                lastName: '${{ steps.parse.outputs.lastName }}',
                location: '${{ steps.parse.outputs.location }}',
-               vpnAccess: '${{ steps.parse.outputs.VPNAccess }}',
                jobTitle: '${{ steps.parse.outputs.jobTitle }}',
                phoneNumber: '${{ steps.parse.outputs.phoneNumber }}'
              };
+
+             const displayName = `${firstName} ${lastName}`;
+             const username = `${firstName.toLowerCase().split(' ')[0]}.${lastName.toLowerCase().split(' ').slice(-1)[0]}`;
+             const email = `${username}@oxmiq.ai`;
 
              await github.rest.issues.createComment({
                issue_number: context.issue.number,
                owner: context.repo.owner,
                repo: context.repo.repo,
                body: "Onboarding of new User Finished!"
+             });
+
+             await github.rest.issues.update({
+               issue_number: context.issue.number,
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               state: 'closed'
              });
