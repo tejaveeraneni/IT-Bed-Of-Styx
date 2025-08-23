@@ -51,4 +51,4 @@ body:
       label: Phone Number
       description: Enter the phone number of the user.
     validations:
-      required: true
+      required: false
