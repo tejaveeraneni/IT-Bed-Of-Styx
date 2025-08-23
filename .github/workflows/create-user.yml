@@ -12,7 +12,7 @@ jobs: # Make a create-user job that runs on the latest version of windows
   create-user:
     runs-on: windows-latest
     # Trigger if issue has "user" label OR if the issue title contains "[Create a New User]"
-    if: contains(github.event.issue.title, "[Create a New User]")
+    if: contains(github.event.issue.title, "[Create a New User]:")
 
     steps: # The first step is to download all the repository code and use the checkout action for that download
        - name: Checkout repository
