@@ -134,6 +134,7 @@ jobs: # Make a create-user job that runs on the latest version of windows
               - **Email**: ${email}
               - **Default Password:**: "Password123"(change at first login)
               - **Account Enabled**: Yes
+              - **License to be Assigned**: Microsoft 365 Business Standard (${{env.AVAILABLE_LICENSES}} available)
 
               **Waiting on Admin Approval to create user**
               `
