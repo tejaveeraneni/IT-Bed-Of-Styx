@@ -84,7 +84,7 @@ jobs: # Make a create-user job that runs on the latest version of windows
           $ClientSecret = "${{secrets.AZURE_CLIENT_SECRET}}" | ConvertTo-SecureString -AsPlainText -Force
           $TenantId = "${{secrets.AZURE_TENANT_ID}}"
 
-          $Credential = New-Object System.Management.Automation.PSCredential($ClientId, $ClientSecret, $TenantId)
+          $Credential = New-Object System.Management.Automation.PSCredential($ClientId, $ClientSecret)
 
           Connect-MgGraph -ClientSecretCredential $Credential -TenantId $TenantId
 
