@@ -99,7 +99,7 @@ jobs: # Make a create-user job that runs on the latest version of windows
           if($businessStandardLicense) {
             $availableLicenses = $businessStandardLicense.PrepaidUnits.Enabled - $businessStandardLicense.ConsumedUnits
             Write-Host "Number of available Business Standard licenses: $availableLicenses"
-            echo "AVAILABLE_LICENSES" >> $env:GITHUB_ENV
+            echo "AVAILABLE_LICENSES=$availableLicenses" >> $env:GITHUB_ENV
           }
 
        - name: Display User Information for Review
