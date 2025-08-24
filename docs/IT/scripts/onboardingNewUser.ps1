@@ -119,7 +119,9 @@ foreach ($user in $users) {
 
     Write-Host "✅ Created user: $($newUser.DisplayName)" -ForegroundColor Green
 
-    Set-MgUserLicense -UserId $newUser.Id -AddLicenses @{SkuId = "O365_BUSINESS_PREMIUM" } -RemoveLicenses @()
+    $SkuId = (Get-MgSubscribedSku -All | Where-Object { $_.SkuPartNumber -eq "O365_BUSINESS_PREMIUM" }).SkuId
+
+    Set-MgUserLicense -UserId $newUser.Id -AddLicenses @{SkuId = $SkuId } -RemoveLicenses @()
 
     Write-Host "Assigned Microsoft 365 Business Standard license to $($newUser.DisplayName)" -ForegroundColor Green
 }
