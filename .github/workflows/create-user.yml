@@ -91,7 +91,7 @@ jobs: # Make a create-user job that runs on the latest version of windows
 
           $licenses = Get-MgSubscribedSku -All
           $businessStandardLicense = $licenses | Where-Object {
-            $_.SkuPartNumber -eq "M365BUSINESS_STANDARD" -or
+            $_.SkuPartNumber -eq "O365_BUSINESS_PREMIUM" -or
             $_.SkuPartNumber -eq "SPB" -or
             $_.DisplayName -like "*Business Standard*"
           }
