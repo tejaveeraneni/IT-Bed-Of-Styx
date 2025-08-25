@@ -133,7 +133,7 @@ jobs: # Make a create-user job that runs on the latest version of windows
     environment: user-creation
     needs: create-user
     steps:
-       - name: Checkout repository  # ⚠️ ADD THIS
+       - name: Checkout repository
          uses: actions/checkout@v4
 
        - name: Create a CSV File with the User Details
