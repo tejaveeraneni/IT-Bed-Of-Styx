@@ -11,6 +11,12 @@ permissions:
 jobs: # Make a create-user job that runs on the latest version of windows
   create-user:
     runs-on: windows-latest
+    outputs:
+      firstName: ${{ steps.parse.outputs.firstName }}
+      lastName: ${{ steps.parse.outputs.lastName }}
+      location: ${{ steps.parse.outputs.location }}
+      jobTitle: ${{ steps.parse.outputs.jobTitle }}
+      phoneNumber: ${{ steps.parse.outputs.phoneNumber }}
     # Trigger if issue has "user" label OR if the issue title contains "[Create a New User]"
     if: contains(github.event.issue.title, '[Create a New User]:')
 
@@ -100,7 +106,7 @@ jobs: # Make a create-user job that runs on the latest version of windows
           if($businessStandardLicense) {
             $availableLicenses = $businessStandardLicense.PrepaidUnits.Enabled - $businessStandardLicense.ConsumedUnits
             Write-Host "Number of available Business Standard licenses: $availableLicenses"
-            echo "AVAILABLE_LICENSES=$availableLicenses" >> $env:GITHUB_ENV
+            echo "AVAILABLE_LICENSES=$availableLicenses" >> $env:GITHUB_OUTPUT
           }
 
        - name: Display User's Information for Review
@@ -114,6 +120,8 @@ jobs: # Make a create-user job that runs on the latest version of windows
                jobTitle: '${{ steps.parse.outputs.jobTitle }}',
                phoneNumber: '${{ steps.parse.outputs.phoneNumber }}',
              };
+
+             const availableLicenses = '${{ steps.license-check.outputs.AVAILABLE_LICENSES }}'; // Add this line
 
              const displayName = `${firstName} ${lastName}`;
              const mailNickname = `${firstName.split(' ')[0].toLowerCase()}.${lastName.split(' ').pop().toLowerCase()}`;
@@ -133,23 +141,29 @@ jobs: # Make a create-user job that runs on the latest version of windows
               - **Phone Number**: ${phoneNumber}
               - **Display Name**: ${displayName}
               - **Email**: ${email}
-              - **Default Password:**: "Password123"(change at first login)
+              - **Default Password**: "Password123"(change at first login)
               - **Account Enabled**: Yes
-              - **License to be Assigned**: Microsoft 365 Business Standard (${{env.AVAILABLE_LICENSES}} available)
+              - **License to be Assigned**: Microsoft 365 Business Standard (${availableLicenses} available)
 
               **Waiting on Admin Approval to create user**
               `
-              })
+              });
 
+  add-user-to-365:
+    runs-on: windows-latest
+    environment: production
+    needs: create-user
+    steps:
+       - name: Checkout repository  # ⚠️ ADD THIS
+         uses: actions/checkout@v4
 
        - name: Create a CSV File with the User Details
-         environment: production
          run: |
-            $FirstName = "${{steps.parse.outputs.firstName}}"
-            $LastName = "${{steps.parse.outputs.lastName}}"
-            $JobTitle = "${{steps.parse.outputs.jobTitle}}"
-            $PhoneNumber = "${{steps.parse.outputs.phoneNumber}}"
-            $UsageLocation = "${{steps.parse.outputs.location}}"
+            $FirstName = "${{needs.create-user.outputs.firstName}}"
+            $LastName = "${{needs.create-user.outputs.lastName}}"
+            $JobTitle = "${{needs.create-user.outputs.jobTitle}}"
+            $PhoneNumber = "${{needs.create-user.outputs.phoneNumber}}"
+            $UsageLocation = "${{needs.create-user.outputs.location}}"
 
             $DisplayName = "$FirstName $LastName"
 
@@ -199,11 +213,11 @@ jobs: # Make a create-user job that runs on the latest version of windows
          with:
            script: |
              const { firstName, lastName, location, jobTitle, phoneNumber } = {
-               firstName: '${{ steps.parse.outputs.firstName }}',
-               lastName: '${{ steps.parse.outputs.lastName }}',
-               location: '${{ steps.parse.outputs.location }}',
-               jobTitle: '${{ steps.parse.outputs.jobTitle }}',
-               phoneNumber: '${{ steps.parse.outputs.phoneNumber }}'
+               firstName: '${{ needs.create-user.outputs.firstName }}',
+               lastName: '${{ needs.create-user.outputs.lastName }}',
+               location: '${{ needs.create-user.outputs.location }}',
+               jobTitle: '${{ needs.create-user.outputs.jobTitle }}',
+               phoneNumber: '${{ needs.create-user.outputs.phoneNumber }}'
              };
 
              const displayName = `${firstName} ${lastName}`;
