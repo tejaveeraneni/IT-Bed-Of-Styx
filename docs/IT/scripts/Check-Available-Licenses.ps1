@@ -1,3 +1,7 @@
+$ClientId = $env:AZURE_CLIENT_ID
+$ClientSecret = $env:AZURE_CLIENT_SECRET | ConvertTo-SecureString -AsPlainText -Force
+$TenantId = $env:AZURE_TENANT_ID
+
 Write-Host "Checking Microsoft 365 Business Standard License Availability..."
 
 $Credential = New-Object System.Management.Automation.PSCredential($ClientId, $ClientSecret)
