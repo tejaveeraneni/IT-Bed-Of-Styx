@@ -30,7 +30,7 @@ function Show-AuditResults {
 # Import-Module Microsoft.Graph -Force
 
 # Write-Host "Connecting to Microsoft Graph" -ForegroundColor Yellow
-Connect-MgGraph -Scopes "User.Read.All", "Group.Read.All", "GroupMember.Read.All", "Directory.Read.All", "RoleManagement.Read.All", "Sites.Read.All", "Team.ReadBasic.All" -NoWelcome
+Connect-MgGraph -Scopes "User.Read.All", "Group.Read.All", "GroupMember.Read.All", "Directory.Read.All", "RoleManagement.Read.All", "Sites.Read.All", "Team.ReadBasic.All", "TeamMember.ReadWrite.All" -NoWelcome
 
 # $userPrincipalName = Read-Host "Enter the email of the user to be offboarded:"
 
@@ -134,52 +134,56 @@ catch {
 }
 
 # Sharepoint Permissions
-try {
-    Write-Host "Getting Sharepoint Site Access"-ForegroundColor Yellow
-    $userSites = Get-MgUserFollowedSite -UserId $User.Id
-    foreach ($Site in $UserSites) {
-        $AuditDetails.SharePointSites += [PSCustomObject]@{
-            SiteName = $Site.DisplayName
-            SiteUrl  = $Site.WebUrl
-            SiteId   = $Site.Id
-            Access   = "Followed"
-        }
-    }
-}
-catch {
-    Write-ErrorDetails -ErrorRecord $_ -Context "Error: Could not find Sharepoint Permissions for user"
-}
-
-# Teams Ownership and Membership
 # try {
-#     foreach ($Group in $AuditDetails.Microsoft365Groups) {
-#         $Team = Get-MgTeam -TeamId $Group.Id
-#         if ($Team) {
-#             $TeamOwners = Get-MgTeamOwner -TeamId $Team.Id
-#             $IsOwner = $TeamOwners.Id -contains $User.Id
-
-#             if ($IsOwner) {
-#                 $AuditDetails.TeamsOwnership += [PSCustomObject]@{
-#                     TeamName    = $Team.DisplayName
-#                     TeamId      = $Team.Id
-#                     GroupId     = $Group.Id
-#                     Description = $Group.Description
-#                 }
-#                 else {
-#                     $AuditDetails.TeamsMembership += [PSCustomObject]@{
-#                         TeamName    = $Team.DisplayName
-#                         TeamId      = $Team.Id
-#                         GroupId     = $Group.Id
-#                         Description = $Group.Description
-#                     }
-#                 }
-#             }
+#     Write-Host "Getting Sharepoint Site Access"-ForegroundColor Yellow
+#     $userSites = Get-MgUserFollowedSite -UserId $User.Id
+#     foreach ($Site in $UserSites) {
+#         $AuditDetails.SharePointSites += [PSCustomObject]@{
+#             SiteName = $Site.DisplayName
+#             SiteUrl  = $Site.WebUrl
+#             SiteId   = $Site.Id
+#             Access   = "Followed"
 #         }
 #     }
 # }
 # catch {
-#     Write-ErrorDetails -ErrorRecord $_ -Context "Could not retrieve Teams permissions and groups"
+#     Write-ErrorDetails -ErrorRecord $_ -Context "Error: Could not find Sharepoint Permissions for user"
 # }
+
+# Teams Ownership and Membership
+try {
+    Write-Host "Getting Teams Ownership and Membership..." -ForegroundColor Blue
+    foreach ($Group in $AuditDetails.Microsoft365Groups) {
+        $Team = Get-MgTeam -TeamId $Group.Id
+        if ($Team) {
+
+            $TeamMember = Get-MgTeamMember -TeamId $Team.Id | Where-Object { $_.DisplayName -eq $User.DisplayName }
+            $IsOwner = $TeamMember.Roles -contains "Owner"
+
+            if ($IsOwner) {
+                $AuditDetails.TeamsOwnership += [PSCustomObject]@{
+                    TeamName    = $Team.DisplayName
+                    TeamId      = $Team.Id
+                    GroupId     = $Group.Id
+                    Description = $Group.Description
+                }
+            }
+            else {
+                $AuditDetails.TeamsMembership += [PSCustomObject]@{
+                    TeamName    = $Team.DisplayName
+                    TeamId      = $Team.Id
+                    GroupId     = $Group.Id
+                    Description = $Group.Description
+                }
+            }
+        }
+    }
+}
+catch {
+    Write-ErrorDetails -ErrorRecord $_ -Context "Could not retrieve Teams permissions and groups"
+}
+
+
 
 Write-Host "=== OFFBOARDING GROUP RESULTS ===" -ForegroundColor Cyan
 Write-Host "User: $($AuditDetails.User) Email: $($AuditDetails.UserPrincipalName)" -ForegroundColor White
@@ -203,8 +207,11 @@ Write-Host "Teams Ownership: $TeamsOwnerCount" -ForegroundColor White
 Write-Host "Teams Membership: $TeamsMemberCount" -ForegroundColor White
 Write-Host ""
 
-Show-AuditResults -Data $AuditDetails.SecurityGroups -Count $SecurityGroupCount -SectionName "SECURITY GROUPS" -Properties ["DisplayName", "Id", "Description"]
-Show-AuditResults -Data $AuditDetails.Microsoft365Groups -Count $Microsoft365GroupCount -SectionName "MICROSOFT 365 GROUPS" -Properties ["DisplayName", "Id", "Description", "Mail"]
-Show-AuditResults -Data $AuditDetails.DistributionLists -Count $DistributionListCount -SectionName "DISTRIBUTION LISTS" -Properties ["DisplayName", "Id", "Description", "Mail"]
-Show-AuditResults -Data $AuditDetails.AzureADRoles -Count $AzureADRoleCount -SectionName "AZURE AD ROLES" -Properties ["RoleName", "RoleID", "Description", "AssignmentId"]
-Show-AuditResults -Data $AuditDetails.SharePointSites -Count $SharepointSiteCount -SectionName "SHAREPOINT SITES" -Properties ["SiteId", "SiteName", "SiteUrl", "Access"]
+Show-AuditResults -Data $AuditDetails.SecurityGroups -Count $SecurityGroupCount -SectionName "SECURITY GROUPS" -Properties @("DisplayName", "Id", "Description")
+Show-AuditResults -Data $AuditDetails.Microsoft365Groups -Count $Microsoft365GroupCount -SectionName "MICROSOFT 365 GROUPS" -Properties @("DisplayName", "Id", "Description", "Mail")
+Show-AuditResults -Data $AuditDetails.DistributionLists -Count $DistributionListCount -SectionName "DISTRIBUTION LISTS" -Properties @("DisplayName", "Id", "Description", "Mail")
+Show-AuditResults -Data $AuditDetails.AzureADRoles -Count $AzureADRoleCount -SectionName "AZURE AD ROLES" -Properties @("RoleName", "RoleID", "Description", "AssignmentId")
+Show-AuditResults -Data $AuditDetails.SharePointSites -Count $SharepointSiteCount -SectionName "SHAREPOINT SITES" -Properties @("SiteId", "SiteName", "SiteUrl", "Access")
+Show-AuditResults -Data $AuditDetails.TeamsOwnership -Count $TeamsOwnerCount -SectionName "TEAMS OWNER" -Properties @("TeamName", "TeamId", "GroupId", "Description")
+Show-AuditResults -Data $AuditDetails.TeamsMembership -Count $TeamsMemberCount -SectionName "TEAMS MEMBER" -Properties @("TeamName", "TeamId", "GroupId", "Description")
+
