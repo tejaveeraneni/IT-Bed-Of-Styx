@@ -26,9 +26,6 @@ function Show-AuditResults {
 # Install-Module -Name Microsoft.Graph -AllowClobber -Force
 # Install-Module -Name ExchangeOnlineManagement -AllowClobber -Force
 
-# Get-Module Microsoft.Graph* | Remove-Module -Force
-# Import-Module Microsoft.Graph -Force
-
 # Write-Host "Connecting to Microsoft Graph" -ForegroundColor Yellow
 Connect-MgGraph -Scopes "User.Read.All", "Group.Read.All", "GroupMember.Read.All", "Directory.Read.All", "RoleManagement.Read.All", "Sites.Read.All", "Team.ReadBasic.All", "TeamMember.ReadWrite.All" -NoWelcome
 
@@ -185,28 +182,26 @@ catch {
 }
 
 # License Assignments
-# License name mapping (SKU to friendly names)
 $licenseNameMapping = @{
-    "O365_E1"                  = "Office 365 E1"
-    "O365_E3"                  = "Office 365 E3"
-    "O365_E5"                  = "Office 365 E5"
-    "O365_F3"                  = "Office 365 F3"
-    "O365_BUSINESS_ESSENTIALS" = "Microsoft 365 Business Basic"
-    "O365_BUSINESS_PREMIUM"    = "Microsoft 365 Business Standard"
-    "SPB"                      = "Microsoft 365 Business Premium"
-    "ENTERPRISEPACK"           = "Office 365 E3"
-    "ENTERPRISEPREMIUM"        = "Office 365 E5"
-    "DESKLESSPACK"             = "Office 365 F3"
-    "EXCHANGESTANDARD"         = "Exchange Online (Plan 1)"
-    "EXCHANGEENTERPRISE"       = "Exchange Online (Plan 2)"
-    "POWER_BI_PRO"             = "Power BI Pro"
-    "VISIOCLIENT"              = "Visio Online Plan 2"
-    "PROJECTONLINE_PLAN_2"     = "Project Online Professional"
-    "EMS"                      = "Enterprise Mobility + Security E3"
-    "EMSPREMIUM"               = "Enterprise Mobility + Security E5"
-    "FLOW_FREE"                = "Microsoft Power Automate Free"
+    "O365_BUSINESS_ESSENTIALS"    = "Microsoft 365 Business Basic"
+    "O365_BUSINESS_PREMIUM"       = "Microsoft 365 Business Standard"
+    "SPB"                         = "Microsoft 365 Business Standard"
+    "SMB_BUSINESS_ESSENTIALS"     = "Microsoft 365 Business Basic"
+    "SMB_BUSINESS_PREMIUM"        = "Microsoft 365 Business Standard"
+    "BUSINESS_ASSIST"             = "Business Assist"
+    "COPILOT_M365_BIZ_PREVIEW"    = "Microsoft 365 Copilot"
+    "FABRIC_FREE"                 = "Microsoft Fabric (Free)"
+    "INTUNE_A"                    = "Microsoft Intune Plan 2"
+    "FLOW_FREE"                   = "Microsoft Power Automate Free"
+    "DYN365_CDS_VIRAL"            = "Microsoft Power Automate Free"
+    "TEAMS_FREE"                  = "Microsoft Teams Premium"
+    "TEAMS_ROOMS_BASIC"           = "Microsoft Teams Rooms Basic"
+    "TEAMS_ROOMS_PRO"             = "Microsoft Teams Rooms Pro"
+    "TEAMS_SHARED_DEVICE"         = "Microsoft Teams Shared Devices"
+    "SHAREPOINTDESKLESS"          = "OneDrive for business (Plan 2)"
+    "POWER_AUTOMATE_ATTENDED_RPA" = "Power Automate per user plan"
+    "POWER_BI_PRO"                = "Power BI Pro"
 }
-
 try {
     Write-Host "Fetching licenses for current user..." -ForegroundColor Green
     $allSkus = Get-MgSubscribedSku
@@ -231,6 +226,7 @@ try {
 catch {
     Write-ErrorDetails -ErrorRecord $_ -Context "Error while fetching licenses from user"
 }
+
 
 
 Write-Host "=== OFFBOARDING GROUP RESULTS ===" -ForegroundColor Cyan
