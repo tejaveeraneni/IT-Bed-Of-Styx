@@ -54,6 +54,7 @@ $AuditDetails = @{
     SharePointSites      = @()
     TeamsOwnership       = @()
     TeamsMembership      = @()
+    LicenseAssignment    = @()
 }
 
 # Azure AD Role Assignments
@@ -183,6 +184,53 @@ catch {
     Write-ErrorDetails -ErrorRecord $_ -Context "Could not retrieve Teams permissions and groups"
 }
 
+# License Assignments
+# License name mapping (SKU to friendly names)
+$licenseNameMapping = @{
+    "O365_E1"                  = "Office 365 E1"
+    "O365_E3"                  = "Office 365 E3"
+    "O365_E5"                  = "Office 365 E5"
+    "O365_F3"                  = "Office 365 F3"
+    "O365_BUSINESS_ESSENTIALS" = "Microsoft 365 Business Basic"
+    "O365_BUSINESS_PREMIUM"    = "Microsoft 365 Business Standard"
+    "SPB"                      = "Microsoft 365 Business Premium"
+    "ENTERPRISEPACK"           = "Office 365 E3"
+    "ENTERPRISEPREMIUM"        = "Office 365 E5"
+    "DESKLESSPACK"             = "Office 365 F3"
+    "EXCHANGESTANDARD"         = "Exchange Online (Plan 1)"
+    "EXCHANGEENTERPRISE"       = "Exchange Online (Plan 2)"
+    "POWER_BI_PRO"             = "Power BI Pro"
+    "VISIOCLIENT"              = "Visio Online Plan 2"
+    "PROJECTONLINE_PLAN_2"     = "Project Online Professional"
+    "EMS"                      = "Enterprise Mobility + Security E3"
+    "EMSPREMIUM"               = "Enterprise Mobility + Security E5"
+    "FLOW_FREE"                = "Microsoft Power Automate Free"
+}
+
+try {
+    Write-Host "Fetching licenses for current user..." -ForegroundColor Green
+    $allSkus = Get-MgSubscribedSku
+    # $allSkus | Select-Object *
+    $userLicenses = Get-MgUserLicenseDetail -UserId $User.Id
+
+    if ($userLicenses.Count -eq 0) {
+        Write-Host "No licenses found for user" -ForegroundColor Gray
+    }
+    else {
+        foreach ($license in $userLicenses) {
+            $subscribedSku = $allSkus | Where-Object { $_.SkuId -eq $license.SkuId }
+
+            $AuditDetails.LicenseAssignment += [PSCustomObject]@{
+                License = $licenseNameMapping.Contains($subscribedSku.SkuPartNumber) ? $licenseNameMapping[$license.SkuPartNumber] : $subscribedSku.SkuPartNumber
+                SkuId   = $subscribedSku.SkuId
+            }
+
+        }
+    }
+}
+catch {
+    Write-ErrorDetails -ErrorRecord $_ -Context "Error while fetching licenses from user"
+}
 
 
 Write-Host "=== OFFBOARDING GROUP RESULTS ===" -ForegroundColor Cyan
@@ -196,6 +244,7 @@ $AzureADRoleCount = $AuditDetails.AzureADRoles.Count
 $SharepointSiteCount = $AuditDetails.SharePointSites.Count
 $TeamsOwnerCount = $AuditDetails.TeamsOwnership.Count
 $TeamsMemberCount = $AuditDetails.TeamsMembership.Count
+$LicenseAssignmentCount = $AuditDetails.LicenseAssignment.Count
 
 Write-Host "This user is present in the following assignments:"
 Write-Host "Security Groups: $SecurityGroupCount" -ForegroundColor White
@@ -205,6 +254,7 @@ Write-Host "Azure AD Roles: $AzureADRoleCount" -ForegroundColor White
 Write-Host "SharePoint Sites: $SharepointSiteCount" -ForegroundColor White
 Write-Host "Teams Ownership: $TeamsOwnerCount" -ForegroundColor White
 Write-Host "Teams Membership: $TeamsMemberCount" -ForegroundColor White
+Write-Host "Licenses: $LicenseAssignmentCount" -ForegroundColor White
 Write-Host ""
 
 Show-AuditResults -Data $AuditDetails.SecurityGroups -Count $SecurityGroupCount -SectionName "SECURITY GROUPS" -Properties @("DisplayName", "Id", "Description")
@@ -214,4 +264,4 @@ Show-AuditResults -Data $AuditDetails.AzureADRoles -Count $AzureADRoleCount -Sec
 Show-AuditResults -Data $AuditDetails.SharePointSites -Count $SharepointSiteCount -SectionName "SHAREPOINT SITES" -Properties @("SiteId", "SiteName", "SiteUrl", "Access")
 Show-AuditResults -Data $AuditDetails.TeamsOwnership -Count $TeamsOwnerCount -SectionName "TEAMS OWNER" -Properties @("TeamName", "TeamId", "GroupId", "Description")
 Show-AuditResults -Data $AuditDetails.TeamsMembership -Count $TeamsMemberCount -SectionName "TEAMS MEMBER" -Properties @("TeamName", "TeamId", "GroupId", "Description")
-
+Show-AuditResults -Data $AuditDetails.LicenseAssignment -Count $LicenseAssignmentCount -SectionName "LICENSES" -Properties @("License", "SkuId")
