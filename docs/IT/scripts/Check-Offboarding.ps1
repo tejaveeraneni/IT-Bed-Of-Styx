@@ -26,8 +26,8 @@ function Show-AuditResults {
 # Install-Module -Name Microsoft.Graph -AllowClobber -Force
 # Install-Module -Name ExchangeOnlineManagement -AllowClobber -Force
 
-# Write-Host "Connecting to Microsoft Graph" -ForegroundColor Yellow
-Connect-MgGraph -Scopes "User.Read.All", "Group.Read.All", "GroupMember.Read.All", "Directory.Read.All", "RoleManagement.Read.All", "Sites.Read.All", "Team.ReadBasic.All", "TeamMember.ReadWrite.All" -NoWelcome
+Write-Host "Connecting to Microsoft Graph" -ForegroundColor Yellow
+Connect-MgGraph -Scopes "User.Read.All", "Group.Read.All", "GroupMember.Read.All", "Directory.Read.All", "RoleManagement.Read.All", "Sites.Read.All", "Team.ReadBasic.All", "TeamMember.ReadWrite.All", "Application.Read.All", "DelegatedPermissionGrant.Read.All" -NoWelcome
 
 # $userPrincipalName = Read-Host "Enter the email of the user to be offboarded:"
 
@@ -41,18 +41,23 @@ if (!$User) {
 }
 
 $AuditDetails = @{
-    User                 = $User.DisplayName
-    UserPrincipalName    = $User.UserPrincipalName
-    SecurityGroups       = @()
-    Microsoft365Groups   = @()
-    DistributionLists    = @()
-    AzureADRoles         = @()
-    AzureRoleAssignments = @()
-    SharePointSites      = @()
-    TeamsOwnership       = @()
-    TeamsMembership      = @()
-    LicenseAssignment    = @()
+    User                     = $User.DisplayName
+    UserPrincipalName        = $User.UserPrincipalName
+    SecurityGroups           = @()
+    Microsoft365Groups       = @()
+    DistributionLists        = @()
+    AzureADRoles             = @()
+    AzureRoleAssignments     = @()
+    SharePointSites          = @()
+    TeamsOwnership           = @()
+    TeamsMembership          = @()
+    LicenseAssignment        = @()
+    DelegatedPermissions     = @()
+    ApplicationRegistrations = @()
 }
+
+<#
+
 
 # Azure AD Role Assignments
 try {
@@ -194,7 +199,7 @@ $licenseNameMapping = @{
     "INTUNE_A"                    = "Microsoft Intune Plan 2"
     "FLOW_FREE"                   = "Microsoft Power Automate Free"
     "DYN365_CDS_VIRAL"            = "Microsoft Power Automate Free"
-    "TEAMS_FREE"                  = "Microsoft Teams Premium"
+    "TEAMS_FREE "                  = "Microsoft Teams Premium"
     "TEAMS_ROOMS_BASIC"           = "Microsoft Teams Rooms Basic"
     "TEAMS_ROOMS_PRO"             = "Microsoft Teams Rooms Pro"
     "TEAMS_SHARED_DEVICE"         = "Microsoft Teams Shared Devices"
@@ -227,6 +232,49 @@ catch {
     Write-ErrorDetails -ErrorRecord $_ -Context "Error while fetching licenses from user"
 }
 
+# Exchange Permissions - Shared mailboxes and mailbox folder permissions
+try {
+    # Write-Host "Getting Exchange Online details..." -ForegroundColor DarkMagenta
+    # Connect-ExchangeOnline -ShowBanner:$false
+    # Get-OrganizationConfig
+}
+catch {
+    Write-ErrorDetails -ErrorRecord $_ -Context "Error while connecting to Exchange Online - Could not retrieve user's information"
+}
+
+#>
+
+# Application Permissions
+try {
+    Write-Host "Getting Application Permissions..." -ForegroundColor Magenta
+    $allGrants = Get-MgOauth2PermissionGrant -All
+    $delegatedGrants = $allGrants | Where-Object { $_.PrincipalId -eq $User.Id }
+
+    foreach ($grant in $delegatedGrants) {
+        $servicePrincipal = Get-MgServicePrincipal -ServicePrincipalId $grant.ResourceId -ErrorAction SilentlyContinue
+        $clientApp = Get-MgServicePrincipal -ServicePrincipalId $grant.ClientId -ErrorAction SilentlyContinue
+
+        if ($servicePrincipal -and $clientApp) {
+
+            $permissionScopes = @()
+            if ($grant.Scope) {
+                $permissionScopes = $grant.Scope.Split(' ') | Where-Object { $_.Trim() -ne '' }
+            }
+            else {
+                $permissionScopes = @()
+            }
+
+            $AuditDetails.DelegatedPermissions += [PSCustomObject]@{
+                ApplicationName = $clientApp.DisplayName
+                ResourceName    = $servicePrincipal.DisplayName
+                Permissions     =
+            }
+        }
+    }
+}
+catch {
+    Write-ErrorDetails -ErrorRecord $_ -Context "Error while fetching Application Permissions"
+}
 
 
 Write-Host "=== OFFBOARDING GROUP RESULTS ===" -ForegroundColor Cyan
@@ -251,6 +299,8 @@ Write-Host "SharePoint Sites: $SharepointSiteCount" -ForegroundColor White
 Write-Host "Teams Ownership: $TeamsOwnerCount" -ForegroundColor White
 Write-Host "Teams Membership: $TeamsMemberCount" -ForegroundColor White
 Write-Host "Licenses: $LicenseAssignmentCount" -ForegroundColor White
+Write-Host "Delegated Permissions: $($delegatedGrants.Count)" -ForegroundColor White
+Write-Host "Application Registrations: $($AuditDetails.ApplicationRegistrations.Count)" -ForegroundColor White
 Write-Host ""
 
 Show-AuditResults -Data $AuditDetails.SecurityGroups -Count $SecurityGroupCount -SectionName "SECURITY GROUPS" -Properties @("DisplayName", "Id", "Description")
@@ -261,3 +311,5 @@ Show-AuditResults -Data $AuditDetails.SharePointSites -Count $SharepointSiteCoun
 Show-AuditResults -Data $AuditDetails.TeamsOwnership -Count $TeamsOwnerCount -SectionName "TEAMS OWNER" -Properties @("TeamName", "TeamId", "GroupId", "Description")
 Show-AuditResults -Data $AuditDetails.TeamsMembership -Count $TeamsMemberCount -SectionName "TEAMS MEMBER" -Properties @("TeamName", "TeamId", "GroupId", "Description")
 Show-AuditResults -Data $AuditDetails.LicenseAssignment -Count $LicenseAssignmentCount -SectionName "LICENSES" -Properties @("License", "SkuId")
+Show-AuditResults -Data $AuditDetails.DelegatedPermissions -Count $DelegatedPermissionsCount -SectionName "DELEGATED PERMISSIONS" -Properties @("Permission", "Scope")
+Show-AuditResults -Data $AuditDetails.ApplicationRegistrations -Count $ApplicationRegistrationCount -SectionName "APPLICATION REGISTRATIONS" -Properties @("AppName", "AppId", "ObjectId")
